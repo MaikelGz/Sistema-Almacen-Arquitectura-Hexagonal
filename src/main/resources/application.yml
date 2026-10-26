@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: inventory-service
+  data:
+    mongodb:
+      uri: mongodb://root:example@localhost:27017/?authSource=admin
+      database: inventory
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

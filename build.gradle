@@ -1,0 +1,69 @@
+plugins {
+    id 'java'
+    id 'jacoco'
+    id 'org.springframework.boot' version '3.3.4'
+    id 'io.spring.dependency-management' version '1.1.6'
+}
+
+group = 'com.acme.inventory'
+version = '0.1.0'
+
+java {
+    sourceCompatibility = '17'
+    targetCompatibility = '17'
+}
+
+repositories {
+    mavenCentral()
+}
+
+
+dependencies {
+    // --- SPRING BOOT (Web + MongoDB + Validation + Actuator) ---
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    // MongoDB
+    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+
+    // --- TESTING (JUnit 5 + Spring Boot + Mockito + JSON) ---
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'  
+
+
+    // necesario con Gradle 9.x para JUnit Platform
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // integra Testcontainers con Spring Boot 3.x
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers'  
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:mongodb'
+
+    // añado esto para un pequeño fronted
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+
+    // dependencias para mapstruct
+    implementation 'org.mapstruct:mapstruct:1.5.5.Final'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
+
+    // --- LOMBOK --- 
+    implementation 'org.projectlombok:lombok:1.18.24' // Añadimos la dependencia de Lombok
+    annotationProcessor 'org.projectlombok:lombok:1.18.24' // Configuramos Lombok para el procesamiento de anotaciones
+}
+
+
+test {
+    useJUnitPlatform()
+    finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        csv.required = false
+        html.required = true
+        html.outputLocation = layout.buildDirectory.dir("reports/coverage").get().asFile
+    }
+}
+

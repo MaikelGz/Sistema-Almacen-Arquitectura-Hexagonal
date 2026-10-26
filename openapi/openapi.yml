@@ -1,0 +1,133 @@
+openapi: 3.0.3
+info:
+  title: Inventory Service API
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+paths:
+  /items:
+    post:
+      summary: Create item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateItemRequest'
+      responses:
+        '201':
+          description: Created
+          headers:
+            Location:
+              schema:
+                type: string
+        '409':
+          description: Item already exists
+  /items/{sku}/warehouses/{wh}:
+    get:
+      summary: Get item by sku+warehouse
+      parameters:
+        - in: path
+          name: sku
+          required: true
+          schema: { type: string }
+        - in: path
+          name: wh
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+        '404': { description: Not Found }
+    put:
+      summary: Update item basics (no stock)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateItemRequest'
+      responses:
+        '200': { description: OK }
+        '404': { description: Not Found }
+    delete:
+      summary: Delete item (only if onHand=0 and reserved=0)
+      responses:
+        '204': { description: No Content }
+        '409': { description: Conflict: non-empty stock/reservations }
+  /items/search:
+    get:
+      summary: List by warehouse or sku prefix
+      parameters:
+        - in: query
+          name: warehouse
+          required: false
+          schema: { type: string }
+        - in: query
+          name: skuPrefix
+          required: false
+          schema: { type: string }
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 0, default: 0 }
+        - in: query
+          name: size
+          schema: { type: integer, minimum: 1, default: 20 }
+      responses:
+        '200': { description: OK }
+  /items/{sku}/warehouses/{wh}/movements:
+    post:
+      summary: Create stock movement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovementRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+        '409': { description: Conflict: would make available negative }
+components:
+  schemas:
+    CreateItemRequest:
+      type: object
+      required: [sku, warehouse]
+      properties:
+        sku: { type: string, pattern: '^[A-Z0-9-]{3,}$' }
+        warehouse: { type: string, pattern: '^[A-Z]{3}$' }
+    UpdateItemRequest:
+      type: object
+      properties:
+        audit:
+          $ref: '#/components/schemas/AuditInfo'
+    MovementRequest:
+      type: object
+      required: [type, quantity, reason]
+      properties:
+        type: { type: string, enum: [IN, OUT, RESERVATION, RELEASE] }
+        quantity: { type: integer, minimum: 1 }
+        reason: { type: string }
+        occurredAt: { type: string, format: date-time }
+    Item:
+      type: object
+      properties:
+        sku: { type: string }
+        warehouse: { type: string }
+        onHand: { type: integer }
+        reserved: { type: integer }
+        available: { type: integer }
+        updatedAt: { type: string, format: date-time }
+    AuditInfo:
+      type: object
+      properties:
+        createdBy: { type: string }
+        createdAt: { type: string, format: date-time }

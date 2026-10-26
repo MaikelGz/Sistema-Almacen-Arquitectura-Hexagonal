@@ -1,0 +1,39 @@
+image: gradle:8.10.0-jdk17
+
+cache:
+  paths:
+    - .gradle/wrapper
+    - .gradle/caches
+
+stages:
+  - build
+  - test
+
+variables:
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+
+before_script:
+  - gradle --version
+
+build:
+  stage: build
+  script:
+    - gradle -q clean classes
+  artifacts:
+    paths:
+      - build/classes
+    expire_in: 1 week
+
+test:
+  stage: test
+  script:
+    - gradle -q test jacocoTestReport
+  artifacts:
+    when: always
+    reports:
+      junit: build/test-results/test/TEST-*.xml
+    paths:
+      - build/reports/tests/test
+      - build/reports/coverage
+      - build/jacoco/test.exec
+    expire_in: 1 week
